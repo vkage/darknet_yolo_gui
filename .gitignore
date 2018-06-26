@@ -19,6 +19,8 @@ cfg/
 darknet
 .fuse*
 
+VOCdevkit/
+
 # OS Generated #
 .DS_Store*
 ehthumbs.db
