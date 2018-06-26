@@ -22,9 +22,11 @@ def convert(size, box):
     h = h*dh
     return (x,y,w,h)
 
+wd = getcwd()
+
 def convert_annotation(year, image_id):
-    in_file = open('VOCdevkit/VOC%s/Annotations/%s.xml'%(year, image_id))
-    out_file = open('VOCdevkit/VOC%s/labels/%s.txt'%(year, image_id), 'w')
+    in_file = open('%s/VOCdevkit/VOC%s/Annotations/%s.xml'%(wd,year, image_id))
+    out_file = open('%s/VOCdevkit/VOC%s/labels/%s.txt'%(wd,year, image_id), 'w')
     tree=ET.parse(in_file)
     root = tree.getroot()
     size = root.find('size')
@@ -41,13 +43,12 @@ def convert_annotation(year, image_id):
         b = (float(xmlbox.find('xmin').text), float(xmlbox.find('xmax').text), float(xmlbox.find('ymin').text), float(xmlbox.find('ymax').text))
         bb = convert((w,h), b)
         out_file.write(str(cls_id) + " " + " ".join([str(a) for a in bb]) + '\n')
-
-wd = getcwd()
+ 
 
 for year, image_set in sets:
-    if not os.path.exists('VOCdevkit/VOC%s/labels/'%(year)):
-        os.makedirs('VOCdevkit/VOC%s/labels/'%(year))
-    image_ids = open('VOCdevkit/VOC%s/ImageSets/Main/%s.txt'%(year, image_set)).read().strip().split()
+    if not os.path.exists('%s/VOCdevkit/VOC%s/labels/'%(wd,year)):
+        os.makedirs('%s,VOCdevkit/VOC%s/labels/'%(wd,year))
+    image_ids = open('%s/VOCdevkit/VOC%s/ImageSets/Main/%s.txt'%(,wd,year, image_set)).read().strip().split()
     list_file = open('%s_%s.txt'%(year, image_set), 'w')
     for image_id in image_ids:
         list_file.write('%s/VOCdevkit/VOC%s/JPEGImages/%s.jpg\n'%(wd, year, image_id))
@@ -55,5 +56,5 @@ for year, image_set in sets:
     list_file.close()
 
 os.system("cat 2007_train.txt 2007_val.txt 2012_train.txt 2012_val.txt > train.txt")
-os.system("cat 2007_train.txt 2007_val.txt 2007_test.txt 2012_train.txt 2012_val.txt > train.all.txt")
+#os.system("cat 2007_train.txt 2007_val.txt 2007_test.txt 2012_train.txt 2012_val.txt > train.all.txt")
 
