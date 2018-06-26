@@ -23,6 +23,98 @@ except AttributeError:
         return QtGui.QApplication.translate(context, text, disambig)
 
 class Ui_mainWindow(object):
+#-------------------------------------------------------------------------------------------------
+    count = 0
+    classSet = []
+
+    def count_class(self,state):
+        if state == QtCore.Qt.Checked:
+            self.count = self.count + 1
+        else:
+            self.count = self.count - 1
+        print(self.count)
+        self.lcdNumber.display(self.count)
+
+
+    def train_cmd(self):
+        self.class_sub()
+
+        string = ''
+        for c in self.classSet:
+            string = string+str(c)+' '
+        string = string[:-1]
+
+        class_update_cmd = "python updateClasses.py "+str( len(self.classSet) )+' '+string
+        print(class_update_cmd)
+        subprocess.call(class_update_cmd,shell=True)
+        train_cmd_str = './darknet detector train cfg/voc_sub.data cfg/yolov3-voc_train.cfg backup yolov3-voc.backup -gpus 0'
+		subprocess.call(train_cmd_str,shell=True)
+        #print(self.classSet)
+
+    def class_sub(self):
+
+    	self.classSet = []
+    	if self.aeroplane.isChecked(): 
+    		self.classSet.append( str(self.aeroplane.objectName()) )
+
+    	if self.bicycle.isChecked(): 
+    		self.classSet.append( str(self.bicycle.objectName()) )
+
+    	if self.bird.isChecked(): 
+    		self.classSet.append( str(self.bird.objectName()) )
+
+    	if self.boat.isChecked(): 
+    		self.classSet.append( str(self.boat.objectName()) )
+
+    	if self.bottle.isChecked(): 
+    		self.classSet.append( str(self.bottle.objectName()) )
+
+    	if self.bus.isChecked(): 
+    		self.classSet.append( str(self.bus.objectName()) )
+
+    	if self.cat.isChecked(): 
+    		self.classSet.append( str(self.cat.objectName()) )
+
+    	if self.car.isChecked(): 
+    		self.classSet.append( str(self.car.objectName()) )
+
+    	if self.chair.isChecked(): 
+    		self.classSet.append( str(self.chair.objectName()) )
+
+    	if self.cow.isChecked(): 
+    		self.classSet.append( str(self.cow.objectName()) )
+
+    	if self.dog.isChecked(): 
+    		self.classSet.append( str(self.dog.objectName()) )
+
+    	if self.diningtable.isChecked(): 
+    		self.classSet.append( str(self.diningtable.objectName()) )
+
+    	if self.horse.isChecked(): 
+    		self.classSet.append( str(self.horse.objectName()) )
+
+    	if self.motorbike.isChecked(): 
+    		self.classSet.append( str(self.motorbike.objectName()) )
+
+    	if self.person.isChecked(): 
+    		self.classSet.append( str(self.person.objectName()) )
+
+    	if self.pottedplant.isChecked(): 
+    		self.classSet.append( str(self.pottedplant.objectName()) )
+
+    	if self.sheep.isChecked(): 
+    		self.classSet.append( str(self.sheep.objectName()) )
+
+    	if self.sofa.isChecked(): 
+    		self.classSet.append( str(self.sofa.objectName()) )
+
+    	if self.train.isChecked(): 
+    		self.classSet.append( str(self.train.objectName()) )
+
+    	if self.tvmonitor.isChecked(): 
+    		self.classSet.append( str(self.tvmonitor.objectName()) )
+#-------------------------------------------------------------------------------------------------
+
     def setupUi(self, mainWindow):
         mainWindow.setObjectName(_fromUtf8("mainWindow"))
         mainWindow.resize(279, 471)
@@ -146,6 +238,32 @@ class Ui_mainWindow(object):
         self.actionTest.setObjectName(_fromUtf8("actionTest"))
         self.menubar.addAction(self.menuTRAIN.menuAction())
 
+#-------------------------------------------------------------------------------------------------
+        self.aeroplane.stateChanged.connect(self.count_class)
+        self.bicycle.stateChanged.connect(self.count_class)
+        self.bird.stateChanged.connect(self.count_class)
+        self.boat.stateChanged.connect(self.count_class)
+        self.bottle.stateChanged.connect(self.count_class)
+        self.bus.stateChanged.connect(self.count_class)
+        self.car.stateChanged.connect(self.count_class)
+        self.cat.stateChanged.connect(self.count_class)
+        self.chair.stateChanged.connect(self.count_class)
+        self.cow.stateChanged.connect(self.count_class)
+        self.diningtable.stateChanged.connect(self.count_class)
+        self.dog.stateChanged.connect(self.count_class)
+        self.horse.stateChanged.connect(self.count_class)
+        self.motorbike.stateChanged.connect(self.count_class)
+        self.person.stateChanged.connect(self.count_class)
+        self.pottedplant.stateChanged.connect(self.count_class)
+        self.sheep.stateChanged.connect(self.count_class)
+        self.sofa.stateChanged.connect(self.count_class)
+        self.train.stateChanged.connect(self.count_class)
+        self.tvmonitor.stateChanged.connect(self.count_class)
+        #QtCore.QObject.connect(self.trainButton, QtCore.SIGNAL(_fromUtf8("clicked()")),self.train_cmd)
+        self.trainButton.clicked.connect(self.train_cmd)
+        self.cancelButton.clicked.connect(QtCore.QCoreApplication.instance().quit)        
+#------------------------------------------------------------------------------------------------- 
+
         self.retranslateUi(mainWindow)
         QtCore.QMetaObject.connectSlotsByName(mainWindow)
 
@@ -178,3 +296,14 @@ class Ui_mainWindow(object):
         self.menuTRAIN.setTitle(_translate("mainWindow", "Train", None))
         self.actionTest.setText(_translate("mainWindow", "Test", None))
 
+        
+
+    # def subset(self):
+    # 	print(self.aeroplane.isChecked())
+    # 	print(self.aeroplane.text())
+    # 	print(self.aeroplane.checkState())
+    # 	print(self.aeroplane.objectName())
+    	
+    # 	self.classSet.append(str(self.aeroplane.objectName()))
+
+    # 	print(self.classSet)
