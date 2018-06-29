@@ -1,0 +1,38 @@
+Train
+./darknet detector train cfg/voc_gui.data cfg/yolov3-voc_gui.cfg backup/yolov3-voc.backup -gpus 0,1
+
+
+Test
+./darknet detector test cfg/voc.data cfg/yolov3-voc.cfg backup/yolov3-voc_40000.weights -gpus 0,1
+
+
+
+1. Generate labels for VOC data corresponding to selected classes.
+	> python voc_label_gui.py
+
+
+
+
+2. Make a single train.txt file of labeled data on which training is going to launch.
+	> cat 2007_train.txt 2007_val.txt 2012_*.txt > train.txt
+
+
+
+3. Modify Cfg for Pascal Data
+	> cfg/voc.data
+
+	== 
+	
+	classes= <num of labels>
+	train  = <path-to-voc>/train.txt
+	valid  = <path-to-voc>2007_test.txt
+	names = data/voc.names
+	backup = backup
+
+
+4. modify your model cfg for training instead of testing for training commands 
+	> cfg/yolov3-voc_train.cfg
+
+	# .cfg file is correctly edited
+		1. classes=<num of labels> every time it appears in the cfg file 
+		2. in the convolutional layer just above each occurrence of classes= the filters property is set correctly; for yolov3, 3 * (classes + 5)
