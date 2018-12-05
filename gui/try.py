@@ -1,13 +1,14 @@
-# -*- coding: utf-8 -*-
+import sys, time
+import os
+from PyQt4 import QtGui,QtCore
+import subprocess
+import trainform
 
-# Form implementation generated from reading ui file 'TrainWidget.ui'
-#
-# Created by: PyQt4 UI code generator 4.11.4
-#
-# WARNING! All changes made in this file will be lost!
+# Compile this file as chmod -x run.py
+# Run this file as ./run.py
+# Compile other ui file as --> pyuic4 TrainWidget.ui -o TrainWidget.py
 
-from PyQt4 import QtCore, QtGui
-
+#_____________________________________________________________________
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
@@ -22,7 +23,194 @@ except AttributeError:
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig)
 
+
+
+#---------------------------------------------------------------------------------
+class Worker(QtCore.QThread):
+	def __init__(self):
+		QtCore.QThread.__init__(self)
+		self.exiting = False
+		self.Size = QtCore.QSize(0,0)
+
+	def output(self):
+		pass
+
+	def startTrain(self,train_cmd_str):#render
+		print("\n calling from thread ",train_cmd_str,"\n")
+		self.strT = train_cmd_str
+		self.start()
+		
+	def __del__(self):
+		self.exiting = True
+		self.wait()
+
+	def run(self):
+		strT = self.strT.split()
+		print(strT)
+		self.p = subprocess.Popen(strT)
+
+
 class Ui_mainWindow(object):
+#---------------------------------------------------------------------
+#   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |
+#   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V
+#---------------------------------------------------------------------
+    count = 0 # no. of classes selected
+    classSet = []	# list of selected class names
+    filterSet = []
+
+    def count_class(self,state):
+        print("\n-------->count class function")
+        if state == QtCore.Qt.Checked:
+            self.count = self.count + 1
+        else:
+            self.count = self.count - 1
+        self.lcdNumber.display(self.count)
+        self.lcdNumber_filters.display( 5*( self.count + 5 ) )
+
+    def cal_weight(self):
+    	# print('\n-------->cal_weight function')
+    	# class update cmd
+    	self.updateClasses()
+    	wt_cal = 'python wt_cal.py '+str( self.count )
+    	print("\n calling ",wt_cal,"\n")
+    	subprocess.call(wt_cal,shell=True)
+    	# print(" ----<<<<>>>------")
+    	weights_result = open('gui_weights.txt','r').readlines()
+    	self.lcdNumber_weight.display(float(weights_result[0]))
+
+# 
+    def stop_cmd(self):
+    	self.trainButton.setDisabled(False)
+    	self.trainButton_relaunch.setDisabled(False)
+    	self.cancelButton.setDisabled(False)
+    	self.weightButton.setDisabled(False)
+    	self.p.terminate()
+    	# self.r.terminate()
+# now
+    def updateFilters(self):# called after updateClasses function call
+    	# print('\n-------->updateFilters function')
+    	string = ''
+    	self.filterSet = []
+    	self.filterSet.append(self.spinBoxConv1.value())
+    	self.filterSet.append(self.spinBoxConv2.value())
+    	self.filterSet.append(self.spinBoxConv3.value())
+    	self.filterSet.append(self.spinBoxConv4.value())
+    	self.filterSet.append(self.spinBoxConv5.value())
+    	self.filterSet.append(self.spinBoxConv6.value())
+    	self.filterSet.append(self.spinBoxConv7.value())
+    	self.filterSet.append(self.spinBoxConv8.value())
+    	self.filterSet.append( 5*(5+len(self.classSet)) )
+
+    	for f in self.filterSet:
+    		string+=str(f)+' '
+
+    	filters_update_cmd = 'python updateFilters.py '+string
+    	print("\n calling ",filters_update_cmd,"\n")
+    	subprocess.call(filters_update_cmd,shell=True)
+    	# print(" ----<<<<>>>------")
+# .,.,.,.,.,.,.,.,.,
+
+    def relaunch_cmd(self):
+    	self.trainButton.setDisabled(True)
+    	self.trainButton_relaunch.setDisabled(True)
+    	self.cancelButton.setDisabled(True)
+    	self.weightButton.setDisabled(True)
+
+    	self.cal_weight()
+    	relaunch_cmd_str = './darknet detector train voc_gui.data gui.cfg backup/gui.backup -gpus 1'
+    	strR = relaunch_cmd_str.split()
+    	self.p=subprocess.Popen(strR)
+#>>>
+
+    def updateClasses(self):
+        # print('\n-------->updateClasses function')
+        self.class_sub()
+        string = ''
+        for c in self.classSet:
+            string = string+str(c)+' '
+        string = string[:-1]
+
+        class_update_cmd = "python updateClasses.py "+str( len(self.classSet) )+' '+string
+        print("\n calling ",class_update_cmd,"\n")
+        subprocess.call(class_update_cmd,shell=True)
+        # print(" ----<<<<>>>------")
+        self.updateFilters()
+
+    # def updateUi(self):
+    # 	"""called when thread stop running"""
+    # 	self.trainButton.setDisabled(False)
+    # 	self.trainButton_relaunch.setDisabled(False)
+    # 	self.cancelButton.setDisabled(False)
+    # 	self.weightButton.setDisabled(False)
+
+    def launchTraining(self):#makePicture
+    	self.trainButton.setDisabled(True)
+    	self.trainButton_relaunch.setDisabled(True)
+    	self.cancelButton.setDisabled(True)
+    	self.weightButton.setDisabled(True)
+    	self.cal_weight()
+    	train_cmd_str = './darknet detector train voc_gui.data gui.cfg -gpus 1'
+    	strT = train_cmd_str.split()
+    	self.p = subprocess.Popen(strT)
+    	# if p.
+
+
+
+    # def train_cmd(self):
+    # 	self.updateClasses()
+    # 	train_cmd_str = './darknet detector train voc_gui.data gui.cfg'
+    # 	print("\n calling ",train_cmd_str,"\n")
+    # 	# subprocess.call(train_cmd_str,shell=True)
+
+    def class_sub(self):
+	##	-->> here classes are implemented by manually creating checkbox button
+        self.classSet = []
+        if self.aeroplane.isChecked(): 
+            self.classSet.append( str(self.aeroplane.objectName()) )
+        if self.bicycle.isChecked(): 
+            self.classSet.append( str(self.bicycle.objectName()) )
+        if self.bird.isChecked(): 
+            self.classSet.append( str(self.bird.objectName()) )
+        if self.boat.isChecked(): 
+            self.classSet.append( str(self.boat.objectName()) )
+        if self.bottle.isChecked(): 
+            self.classSet.append( str(self.bottle.objectName()) )
+        if self.bus.isChecked(): 
+            self.classSet.append( str(self.bus.objectName()) )
+        if self.cat.isChecked(): 
+            self.classSet.append( str(self.cat.objectName()) )
+        if self.car.isChecked(): 
+            self.classSet.append( str(self.car.objectName()) )
+        if self.chair.isChecked(): 
+            self.classSet.append( str(self.chair.objectName()) )
+        if self.cow.isChecked(): 
+            self.classSet.append( str(self.cow.objectName()) )
+        if self.dog.isChecked(): 
+            self.classSet.append( str(self.dog.objectName()) )
+        if self.diningtable.isChecked(): 
+            self.classSet.append( str(self.diningtable.objectName()) )
+        if self.horse.isChecked(): 
+            self.classSet.append( str(self.horse.objectName()) )
+        if self.motorbike.isChecked(): 
+            self.classSet.append( str(self.motorbike.objectName()) )
+        if self.person.isChecked(): 
+            self.classSet.append( str(self.person.objectName()) )
+        if self.pottedplant.isChecked(): 
+            self.classSet.append( str(self.pottedplant.objectName()) )
+        if self.sheep.isChecked(): 
+            self.classSet.append( str(self.sheep.objectName()) )
+        if self.sofa.isChecked(): 
+            self.classSet.append( str(self.sofa.objectName()) )
+        if self.train.isChecked(): 
+            self.classSet.append( str(self.train.objectName()) )
+        if self.tvmonitor.isChecked(): 
+            self.classSet.append( str(self.tvmonitor.objectName()) )
+
+#---------------------------------------------------------------------
+#   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A
+#   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |
+#---------------------------------------------------------------------
     def setupUi(self, mainWindow):
         mainWindow.setObjectName(_fromUtf8("mainWindow"))
         mainWindow.resize(500, 737)
@@ -438,7 +626,7 @@ class Ui_mainWindow(object):
         self.lcdNumber_filters.setFrameShape(QtGui.QFrame.NoFrame)
         self.lcdNumber_filters.setFrameShadow(QtGui.QFrame.Plain)
         self.lcdNumber_filters.setDigitCount(3)
-        self.lcdNumber_filters.setProperty("value", 125.0)
+        self.lcdNumber_filters.setProperty("value", 25.0)
         self.lcdNumber_filters.setObjectName(_fromUtf8("lcdNumber_filters"))
         self.TrainWigLabel_29.raise_()
         self.TrainWigLabel_28.raise_()
@@ -454,6 +642,53 @@ class Ui_mainWindow(object):
         mainWindow.setCentralWidget(self.centralwidget)
         self.actionTest = QtGui.QAction(mainWindow)
         self.actionTest.setObjectName(_fromUtf8("actionTest"))
+#---------------------------------------------------------------------
+#   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |
+#   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V   V
+#---------------------------------------------------------------------
+
+#######_______________________________________________________________
+
+        # self.thread = Worker()
+        # self.thread.finished.connect(self.updateUi)
+        # self.thread.terminated.connect(self.updateUi)
+        # self.thread.output.connect(self.train_cmd)
+        self.trainButton.clicked.connect(self.launchTraining)
+        # self. thread.setTerminationEnabled(True)
+
+#######_______________________________________________________________
+
+        self.aeroplane.stateChanged.connect(self.count_class)
+        self.bicycle.stateChanged.connect(self.count_class)
+        self.bird.stateChanged.connect(self.count_class)
+        self.boat.stateChanged.connect(self.count_class)
+        self.bottle.stateChanged.connect(self.count_class)
+        self.bus.stateChanged.connect(self.count_class)
+        self.car.stateChanged.connect(self.count_class)
+        self.cat.stateChanged.connect(self.count_class)
+        self.chair.stateChanged.connect(self.count_class)
+        self.cow.stateChanged.connect(self.count_class)
+        self.diningtable.stateChanged.connect(self.count_class)
+        self.dog.stateChanged.connect(self.count_class)
+        self.horse.stateChanged.connect(self.count_class)
+        self.motorbike.stateChanged.connect(self.count_class)
+        self.person.stateChanged.connect(self.count_class)
+        self.pottedplant.stateChanged.connect(self.count_class)
+        self.sheep.stateChanged.connect(self.count_class)
+        self.sofa.stateChanged.connect(self.count_class)
+        self.train.stateChanged.connect(self.count_class)
+        self.tvmonitor.stateChanged.connect(self.count_class)
+        #QtCore.QObject.connect(self.trainButton, QtCore.SIGNAL(_fromUtf8("clicked()")),self.train_cmd)
+        self.weightButton.clicked.connect(self.cal_weight)
+        # self.trainButton.clicked.connect(self.train_cmd)
+        self.cancelButton_stop.clicked.connect(self.stop_cmd)
+        self.trainButton_relaunch.clicked.connect(self.relaunch_cmd)
+        self.cancelButton.clicked.connect(QtCore.QCoreApplication.instance().quit)
+
+#---------------------------------------------------------------------
+#   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A   A
+#   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |
+#---------------------------------------------------------------------
 
         self.retranslateUi(mainWindow)
         self.tabWidget.setCurrentIndex(14)
@@ -521,4 +756,27 @@ class Ui_mainWindow(object):
         self.TrainWigLabel_29.setText(_translate("mainWindow", "<html><head/><body><p>batch_normalize=1</p><p><span style=\" font-weight:600;\">filters = (classes + 5)x5 = </span></p><p>size=3</p><p>stride=1</p><p>pad=1</p><p>activation=leaky</p></body></html>", None))
         self.TrainWigLabel_30.setText(_translate("mainWindow", "<html><head/><body><p><span style=\" font-size:12pt; font-weight:600; text-decoration: underline; color:#161616;\">YOLOv2-tiny-voc Layer Structure</span></p></body></html>", None))
         self.actionTest.setText(_translate("mainWindow", "Test", None))
+		
 
+app = QtGui.QApplication(sys.argv)
+mainWindow = QtGui.QMainWindow()
+trainWidget = Ui_mainWindow()
+trainWidget.setupUi(mainWindow)
+mainWindow.show()
+
+# form = QtGui.QWidget()
+# form_ob = trainform.Ui_Form()
+# form_ob.setupUi(form)
+# form.show()
+
+sys.exit(app.exec_())
+
+#_____________________________________________________________________
+#if __name__ == "__main__":
+    # app = QtGui.QApplication(sys.argv)
+    # mainWindow = QtGui.QMainWindow()
+    # trainWidget = Train_gui.Ui_mainWindow()
+    # trainWidget.setupUi(mainWindow)
+    # # mainWindow.show()
+    # # sys.exit(app.exec_())
+    # trainfx()
